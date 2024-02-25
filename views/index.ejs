@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GitHub Release Notes</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <style>
+      /* Custom styles */
+      body {
+        background-color: #f5f7fa;
+        font-family: "Source Sans Pro", sans-serif;
+      }
+      .container {
+        max-width: 75%;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #ffffff;
+        border-radius: 10px;
+        box-shadow: 0 7px 13px rgba(71, 88, 114, 0.301) !important;
+      }
+      .form-control {
+        display: block;
+        color: #495057;
+        background-color: #fff;
+        background-clip: padding-box;
+        border: 1px solid #ced4da;
+        border-radius: 5px;
+        transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+      }
+      .btn-primary {
+        border-radius: 5px;
+        display: inline-block;
+        color: #fff;
+        background-color: rgba(0, 0, 0, 0);
+        border: 1px solid rgba(0, 0, 0, 0);
+        background: #6933ff;
+      }
+      .btn-primary:hover {
+        background: #152849 !important;
+        border-color: #152849 !important;
+      }
+      h1 {
+        font-size: 36px;
+        margin-bottom: 30px;
+        font-weight: bold;
+      }
+      h2 {
+        color: #6933ff;
+        margin-bottom: 20px;
+        font-weight: bold;
+      }
+      h3 {
+        color: #6933ff;
+        margin-bottom: 15px;
+        font-weight: bold;
+      }
+      a {
+        color: #05f;
+        text-decoration: underline;
+      }
+      a:hover {
+        color: #05f;
+        text-decoration: underline;
+      }
+      .table th {
+        background-color: #6933ff;
+        color: #ffffff;
+        border-color: #6933ff;
+      }
+      .table td,
+      .table th {
+        border-color: #d6dbe7;
+      }
+      .avatar {
+        border-radius: 50%;
+        width: 40px;
+        height: 40px;
+        margin-right: 10px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1 class="title">GitHub Release Notes Viewer</h1>
+      <form action="/" method="post">
+        <div class="row mb-3">
+          <div class="col">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Owner"
+              name="owner"
+              required
+            />
+          </div>
+          <div class="col">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Repository"
+              name="repo"
+              required
+            />
+          </div>
+          <div class="col">
+            <input
+              type="text"
+              class="form-control"
+              placeholder="Version or Tag"
+              name="tag"
+              required
+            />
+          </div>
+          <div class="col-auto">
+            <button type="submit" class="btn btn-primary">
+              Get Release Notes
+            </button>
+          </div>
+        </div>
+      </form>
+
+      <% if (error) { %>
+      <div class="row">
+        <div class="col">
+          <h2>Release Details</h2>
+          <pre class="danger"><%= error %></pre>
+        </div>
+      </div>
+      <% } %> <% if (releaseDetails) { %>
+      <div class="row">
+        <div class="col">
+          <h2>Release Details</h2>
+          <table class="table table-bordered">
+            <tbody>
+              <tr>
+                <th scope="row">Version</th>
+                <td>
+                  <a href="<%= releaseDetails.html_url %>"
+                    ><%= releaseDetails.name %></a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Author</th>
+                <td>
+                  <a href="<%= releaseDetails.author.html_url %>">
+                    <% if ( releaseDetails.author.avatar_url) { %>
+                    <img
+                      src="<%= releaseDetails.author.avatar_url %>"
+                      alt="Avatar"
+                      class="avatar"
+                    />
+                    <% } %><%= releaseDetails.author.login %></a
+                  >
+                </td>
+              </tr>
+              <tr>
+                <th scope="row">Date</th>
+                <td>
+                  <%= new Date(releaseDetails.published_at).toLocaleDateString()
+                  %>
+                </td>
+              </tr>
+              <% if (releaseDetails.assets.length > 0) { %>
+              <tr>
+                <th scope="row">Files</th>
+                <td>
+                  <% releaseDetails.assets.forEach(asset => { %>
+                  <a href="<%= asset.browser_download_url %>"
+                    ><%= asset.name %></a
+                  ><br />
+                  <% }) %>
+                </td>
+              </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <% } %> <% if (categorizedCommits) { %>
+      <div class="row">
+        <div class="col">
+          <h2>Commits</h2>
+          <% Object.entries(categorizedCommits).forEach(([type, commits]) => {
+          %> <% if (commits.length > 0) { %>
+          <h3><%= type.charAt(0).toUpperCase() + type.slice(1) %></h3>
+          <table class="table table-bordered table-striped table-sm">
+            <thead>
+              <tr>
+                <th scope="col" class="col-2">Commit ID</th>
+                <th scope="col" class="col-7">Message</th>
+                <th scope="col" class="col-3">Author</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% commits.forEach(commit => { %>
+              <tr>
+                <td scope="row">
+                  <a href="<%= commit.html_url %>"
+                    ><%= commit.sha.substring(0, 7) %></a
+                  >
+                </td>
+                <td><%= commit.commit.message %></td>
+                <td>
+                  <a href="<%= commit.author.html_url %>">
+                    <% if (commit.author && commit.author.avatar_url) { %>
+                    <img
+                      src="<%= commit.author.avatar_url %>"
+                      alt="Avatar"
+                      class="avatar"
+                    />
+                    <% } %><%= commit.commit.author.name %></a
+                  >
+                </td>
+              </tr>
+              <% }) %>
+            </tbody>
+          </table>
+          <% } %> <% }) %>
+        </div>
+      </div>
+      <% } %>
+    </div>
+  </body>
+</html>
